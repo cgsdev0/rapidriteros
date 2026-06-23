@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import { useEffect, useState } from "react";
+import { useNavigate, Routes, Route } from "react-router";
 import "./App.css";
 import { NewShowEditor } from "./components/NewShowEditor";
 import { ShowCard } from "./components/ShowCard";
@@ -29,6 +30,8 @@ function App() {
   const [editingShow, setEditingShow] = useState<ShowDetail | null>(null);
   const [addingShow, setAddingShow] = useState(false);
   const [selectedShowType, setSelectedShowType] = useState<string | null>(null);
+
+  let navigate = useNavigate();
 
   const fetchShows = () => {
     fetch("/api/shows")
@@ -147,6 +150,7 @@ function App() {
       const data = await response.json();
       if (data.success) {
         setEditingShow(data.show);
+        navigate("/edit-show");
       }
     } catch (err) {
       console.error("Error fetching show details:", err);
@@ -154,21 +158,20 @@ function App() {
   };
 
   const closeEditor = () => {
-    setEditingShow(null);
+    navigate("/");
   };
 
   const startAddingShow = () => {
-    setAddingShow(true);
-    setSelectedShowType(null);
+    navigate("/select-type");
   };
 
   const selectShowType = (showType: string) => {
     setSelectedShowType(showType);
+    navigate("/new-show");
   };
 
   const cancelAddShow = () => {
-    setAddingShow(false);
-    setSelectedShowType(null);
+    navigate("/", { replace: true });
   };
 
   const handleSaveNewShow = () => {
@@ -177,7 +180,7 @@ function App() {
   };
 
   const backToTypeSelection = () => {
-    setSelectedShowType(null);
+    navigate("/select-type", { replace: true });
   };
 
   const handleSaveShow = () => {
@@ -207,88 +210,98 @@ function App() {
       </div>
     );
 
-  if (editingShow) {
-    return (
-      <ShowEditor
-        show={editingShow}
-        onClose={closeEditor}
-        onSave={handleSaveShow}
-      />
-    );
-  }
-
-  if (addingShow) {
-    if (!selectedShowType) {
-      return (
-        <ShowTypeSelector
-          onSelectType={selectShowType}
-          onCancel={cancelAddShow}
-        />
-      );
-    } else {
-      return (
-        <NewShowEditor
-          showType={selectedShowType}
-          onCancel={cancelAddShow}
-          onSave={handleSaveNewShow}
-          onBackToTypeSelection={backToTypeSelection}
-        />
-      );
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Rapid Riter Shows
-          </h1>
-          <button
-            onClick={startAddingShow}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors cursor-pointer"
-          >
-            Add Show
-          </button>
-        </div>
+    <Routes>
+      <Route
+        index
+        element={
+          <>
+            <div className="min-h-screen bg-gray-50 py-8">
+              <div className="max-w-4xl mx-auto px-4">
+                <div className="flex justify-between items-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    Rapid Riter Shows
+                  </h1>
+                  <button
+                    onClick={startAddingShow}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors cursor-pointer"
+                  >
+                    Add Show
+                  </button>
+                </div>
 
-        {shows.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No shows found</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {shows.map((show) => (
-              <ShowCard
-                key={show.id}
-                show={show}
-                onEdit={editShow}
-                onToggleDisabled={setShowDisabled}
-                onDelete={deleteShow}
-                onShowImmediately={showImmediately}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+                {shows.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No shows found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {shows.map((show) => (
+                      <ShowCard
+                        key={show.id}
+                        show={show}
+                        onEdit={editShow}
+                        onToggleDisabled={setShowDisabled}
+                        onDelete={deleteShow}
+                        onShowImmediately={showImmediately}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-      <footer className="mt-16 pb-8">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-md text-gray-400">
-            <a
-              href="https://github.com/gregsadetsky/rapidriteros"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-gray-600 transition-colors underline"
-            >
-              GitHub
-            </a>
-            {" • "}
-            Contact Greg Sadetsky F2'23 for any questions
-          </p>
-        </div>
-      </footer>
-    </div>
+              <footer className="mt-16 pb-8">
+                <div className="max-w-4xl mx-auto px-4 text-center">
+                  <p className="text-md text-gray-400">
+                    <a
+                      href="https://github.com/gregsadetsky/rapidriteros"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-gray-600 transition-colors underline"
+                    >
+                      GitHub
+                    </a>
+                    {" • "}
+                    Contact Greg Sadetsky F2'23 for any questions
+                  </p>
+                </div>
+              </footer>
+            </div>
+          </>
+        }
+      />
+      <Route
+        path="edit-show"
+        element={
+          <ShowEditor
+            show={editingShow}
+            onClose={closeEditor}
+            onSave={handleSaveShow}
+          />
+        }
+      />
+
+      <Route
+        path="select-type"
+        element={
+          <ShowTypeSelector
+            onSelectType={selectShowType}
+            onCancel={cancelAddShow}
+          />
+        }
+      />
+      <Route
+        path="new-show"
+        element={
+          <NewShowEditor
+            showType={selectedShowType}
+            onCancel={cancelAddShow}
+            onSave={handleSaveNewShow}
+            onBackToTypeSelection={backToTypeSelection}
+          />
+        }
+      />
+    </Routes>
   );
 }
 
